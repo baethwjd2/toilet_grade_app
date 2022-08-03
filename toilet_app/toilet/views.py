@@ -24,12 +24,12 @@ class ToiletViewSet(ModelViewSet):
     def search(self, request):
 
         # 유저 정보 GET Request
-        lat = float(request.GET.get("lat", None))
-        lon = float(request.GET.get("lon", None))
+        lat = request.GET.get("lat", None)
+        lon = request.GET.get("lon", None)
         gen = request.GET.get("gen", None)
-        is_disabled = bool(request.GET.get("is_disabled", None))
-        is_child = bool(request.GET.get("is_child", None))
-        max_distance = int(request.GET.get("max_distance", None))
+        is_disabled = request.GET.get("is_disabled", None)
+        is_child = request.GET.get("is_child", None)
+        max_distance = request.GET.get("max_distance", None)
 
         # 사용자 위치로부터 화장실 거리 계산
         loc_user = (lat, lon)
@@ -49,15 +49,17 @@ class ToiletViewSet(ModelViewSet):
 
         if gen is not None:
             if gen==0:
-                q.add(Q(genger="MAN"), q.AND)
+                q.add(Q(manToiletNum__gte=0), q.AND)
                 q.add(Q(isBisexual=True), q.OR)
             if gen==1:
-                q.add(Q(genger="WOMAN"), q.AND)
+                q.add(Q(womanToiletNum__gte=0), q.AND)
                 q.add(Q(isBisexual=True), q.OR)
 
         if is_disabled is not None and is_disabled:
-            q.add(Q(disabledToiletNum__gte=0), q.AND)
-            q.add(Q(disabledUrinalNum__gte=0), q.OR)
+            if gen==0:
+                q.add(Q(manDisabledToiletNum__gte=0), q.AND)
+            if gen==1:
+                q.add(Q(womanDisabledToiletNum__gte=0), q.AND)
 
         if is_child is not None and is_child:
             q.add(Q(childUrinalNum__gte=0), q.AND)
