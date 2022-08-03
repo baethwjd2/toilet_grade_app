@@ -3,6 +3,6 @@ from . import views
 
 app_name = "toilet"
 router = DefaultRouter()
-router.register("", views.ToiletsView)
+router.register("", views.ToiletViewSet)
 
 urlpatterns = router.urls
