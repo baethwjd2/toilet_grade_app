@@ -2,15 +2,23 @@ from http.client import HTTPResponse
 from .models import Toilet
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from haversine import haversine, Unit
 from .serializers import ToiletSerializer
 from django.db.models import Q
 from django.shortcuts import render
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
 class ToiletViewSet(ModelViewSet):
 
     toilets = Toilet.objects.all()
+    queryset = toilets
     serializer_class = ToiletSerializer
+    pagination_class = StandardResultsSetPagination
 
     @action(detail=False)
     def search(self, request):
@@ -26,7 +34,7 @@ class ToiletViewSet(ModelViewSet):
         # 사용자 위치로부터 화장실 거리 계산
         loc_user = (lat, lon)
 
-        for toilet in toilets:
+        for toilet in self.toilets:
             loc_toilet = (toilet.latitude, toilet.longitude)
             toilet.distance = haversine(loc_user, loc_toilet, unit='m')
 
@@ -57,7 +65,7 @@ class ToiletViewSet(ModelViewSet):
             result = Toilet.objects.filter(q)
         except ValueError:
             result = Toilet.objects.all()
-        results = paginator.paginate_queryset(toilets, request)
+        results = paginator.paginate_queryset(self.toilets, request)
         serializer = ToiletSerializer(results, many=True)
 
         return paginator.get_paginated_response(serializer.data)
