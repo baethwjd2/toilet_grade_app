@@ -38,3 +38,4 @@ class Toilet(CoreModel):
     installationDate = models.CharField(max_length=140, null=False)
     latitude = models.DecimalField(help_text="위도", max_digits=500, decimal_places=2, null=True)
     longitude = models.DecimalField(help_text="경도", max_digits=500, decimal_places=2, null=True)
+    distance = models.DecimalField(help_text="경도", max_digits=500, decimal_places=2, null=True, default=0)
