@@ -20,6 +20,7 @@ class ToiletViewSet(ModelViewSet):
         lon = request.GET.get("lon", None)
         gen = request.GET.get("gen", None)
         is_disabled = request.GET.get("is_disabled", None)
+        is_child = request.GET.get("is_child", None)
         max_distance = request.GET.get("max_distance", None)
 
         # 사용자 위치로부터 화장실 거리 계산
@@ -43,9 +44,12 @@ class ToiletViewSet(ModelViewSet):
                 q.add(Q(genger="WOMAN"), q.AND)
                 q.add(Q(isBisexual=True), q.OR)
 
-        if gen is not None and is_disabled:
+        if is_disabled is not None and is_disabled:
             q.add(Q(disabledToiletNum__gte=0), q.AND)
             q.add(Q(disabledUrinalNum__gte=0), q.OR)
+
+        if is_child is not None and is_child:
+            q.add(Q(childUrinalNum__gte=0), q.AND)
 
         paginator = self.paginator
 
