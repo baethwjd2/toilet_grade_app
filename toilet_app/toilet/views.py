@@ -24,12 +24,12 @@ class ToiletViewSet(ModelViewSet):
     def search(self, request):
 
         # 유저 정보 GET Request
-        lat = request.GET.get("lat", None)
-        lon = request.GET.get("lon", None)
+        lat = float(request.GET.get("lat", None))
+        lon = float(request.GET.get("lon", None))
         gen = request.GET.get("gen", None)
-        is_disabled = request.GET.get("is_disabled", None)
-        is_child = request.GET.get("is_child", None)
-        max_distance = request.GET.get("max_distance", None)
+        is_disabled = bool(request.GET.get("is_disabled", None))
+        is_child = bool(request.GET.get("is_child", None))
+        max_distance = float(request.GET.get("max_distance", None))
 
         # 사용자 위치로부터 화장실 거리 계산
         loc_user = (lat, lon)
@@ -40,10 +40,9 @@ class ToiletViewSet(ModelViewSet):
                 toilet.distance = haversine(loc_user, loc_toilet, unit='m')
             except:
                 pass
-
+        
         # 필터링
         q = Q()
-
         if max_distance is not None:
             q.add(Q(distance__lte=max_distance), q.AND)
 
@@ -68,6 +67,7 @@ class ToiletViewSet(ModelViewSet):
 
         try:
             result = Toilet.objects.filter(q)
+            print("길이", len(result))
         except ValueError:
             result = Toilet.objects.all()
         results = paginator.paginate_queryset(self.toilets, request)
