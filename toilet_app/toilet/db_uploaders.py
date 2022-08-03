@@ -17,7 +17,7 @@ def insert_toilet():
         data_reader = csv.DictReader(csvfile)
         print(data_reader)
         for row in data_reader:
-            gender = 'BOTH' if int(row['MALE_WTRCLS_CNT']) > 0 and int(row['FEMALE_WTRCLS_CNT']) > 0  else ['MAN' if int(row['MALE_WTRCLS_CNT']) > 0 else 'WOMAN']
+            gender = 'BOTH' if int(row['MALE_WTRCLS_CNT']) > 0 and int(row['FEMALE_WTRCLS_CNT']) > 0  else 'MAN' if int(row['MALE_WTRCLS_CNT']) > 0 else 'WOMAN'
             Toilet.objects.create(name=row['PBCTLT_PLC_NM'], 
             address=row['REFINE_ROADNM_ADDR'], 
             gender=gender,
