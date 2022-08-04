@@ -3,7 +3,7 @@ from .models import Toilet
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from haversine import haversine, Unit
+from haversine import haversine
 from .serializers import ToiletSerializer
 from django.db.models import Q
 from django.shortcuts import render
@@ -24,12 +24,12 @@ class ToiletViewSet(ModelViewSet):
     def search(self, request):
 
         # 유저 정보 GET Request
-        lat = request.GET.get("lat", None)
-        lon = request.GET.get("lon", None)
+        lat = float(request.GET.get("lat", None))
+        lon = float(request.GET.get("lon", None))
         gen = request.GET.get("gen", None)
-        is_disabled = request.GET.get("is_disabled", None)
-        is_child = request.GET.get("is_child", None)
-        max_distance = request.GET.get("max_distance", None)
+        is_disabled = bool(int(request.GET.get("is_disabled", None)))
+        is_child = bool(int(request.GET.get("is_child", None)))
+        max_distance = float(request.GET.get("max_distance", None))
 
         # 사용자 위치로부터 화장실 거리 계산
         loc_user = (lat, lon)
@@ -38,14 +38,17 @@ class ToiletViewSet(ModelViewSet):
             try:
                 loc_toilet = (toilet.latitude, toilet.longitude)
                 toilet.distance = haversine(loc_user, loc_toilet, unit='m')
+                toilet.save()
             except:
+                toilet.distance = -1
+                toilet.save()
                 pass
 
         # 필터링
         q = Q()
-
         if max_distance is not None:
             q.add(Q(distance__lte=max_distance), q.AND)
+            q.add(Q(distance__gt=0), q.AND)
 
         if gen is not None:
             if gen==0:
@@ -56,13 +59,16 @@ class ToiletViewSet(ModelViewSet):
                 q.add(Q(isBisexual=True), q.OR)
 
         if is_disabled is not None and is_disabled:
-            if gen==0:
-                q.add(Q(manDisabledToiletNum__gte=0), q.AND)
-            if gen==1:
-                q.add(Q(womanDisabledToiletNum__gte=0), q.AND)
+            if gen=='MAN':
+                q.add(Q(manDisabledToiletNum__gt=0)|Q(disabledUrinalNum__gt=0), q.AND)
+            if gen=='WOMAN':
+                q.add(Q(womanDisabledToiletNum__gt=0), q.AND)
 
         if is_child is not None and is_child:
-            q.add(Q(childUrinalNum__gte=0), q.AND)
+            if gen=='MAN':
+                q.add(Q(childUrinalNum__gt=0)| Q(manChildToiletNum__gt=0), q.AND)
+            if gen=='WOMAN':
+                q.add(Q(womanChildToiletNum__gt=0), q.AND)
 
         paginator = self.paginator
 
@@ -70,16 +76,7 @@ class ToiletViewSet(ModelViewSet):
             result = Toilet.objects.filter(q)
         except ValueError:
             result = Toilet.objects.all()
-        results = paginator.paginate_queryset(self.toilets, request)
+        results = paginator.paginate_queryset(result, request)
         serializer = ToiletSerializer(results, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
-
-            
-
-        
-        
-
-
-
